@@ -24,6 +24,21 @@ class JobController extends AbstractController
             'controller_name' => 'JobController',
         ]);
     }
+    /**
+     * @Route("/job/detail", name="job_detail")
+     */
+    public function jobDetail(ManagerRegistry $doctrine): Response
+    {
+        $conn = $doctrine->getConnection();
+        $sql = "SELECT *, MATCH (work) AGAINST ('PHP') as score FROM `CV` WHERE MATCH (work) AGAINST (:search_value) order by score desc";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute(['search_value' => 'PHP']);
+        $candidates = $stmt->fetchAllAssociative();
+
+        return $this->render('job/details.html.twig', [
+            'candidates' => $candidates,
+        ]);
+    }
 
     /**
      * @Route("/job/search/{search_value}", name="job_search")
@@ -32,7 +47,7 @@ class JobController extends AbstractController
     {
 
         $conn = $doctrine->getConnection();
-        $sql = "SELECT * FROM `job` WHERE MATCH (title,location) AGAINST (:search_value)";
+        $sql = "SELECT *, MATCH (title,location) AGAINST ('PHP') as score FROM `job` WHERE MATCH (title,location) AGAINST (:search_value) order by score desc";
         $stmt = $conn->prepare($sql);
         $stmt->execute(['search_value' => $search_value]);
         $job = $stmt->fetchAllAssociative();
