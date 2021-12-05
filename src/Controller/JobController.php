@@ -6,6 +6,7 @@ use App\Entity\Job;
 use GuzzleHttp\Client;
 use Symfony\Component\CssSelector;
 use Doctrine\Persistence\ManagerRegistry;
+use PhpParser\Node\Stmt\Break_;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -22,6 +23,21 @@ class JobController extends AbstractController
         return $this->render('job/index.html.twig', [
             'controller_name' => 'JobController',
         ]);
+    }
+
+    /**
+     * @Route("/job/search/{search_value}", name="job_search")
+     */
+    public function search(string $search_value, ManagerRegistry $doctrine): Response
+    {
+
+        $conn = $doctrine->getConnection();
+        $sql = "SELECT * FROM `job` WHERE MATCH (title,location) AGAINST (:search_value)";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute(['search_value' => $search_value]);
+        $job = $stmt->fetchAllAssociative();
+
+        return $this->json(['search_result' => $job]);
     }
 
     /**
@@ -64,8 +80,8 @@ class JobController extends AbstractController
             ->each(function (Crawler $node, $i) {
 
                 $job_ent = new Job();
-                $job_ent->setTitle($node->filter('h3 > small')->text());
-                $job_ent->setCompany($node->filter('h2 > strong')->text());
+                $job_ent->setTitle($node->filter('h2 > strong')->text());
+                $job_ent->setCompany($node->filter('h3 > small')->text());
                 $job_ent->setLocation($node->filter('span > a')->text());
                 $job_ent->setDescription("");
 

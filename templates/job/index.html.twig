@@ -1,20 +1,66 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Hello JobController!{% endblock %}
+{% block title %}Search
+{% endblock %}
 
 {% block body %}
-<style>
-    .example-wrapper { margin: 1em auto; max-width: 800px; width: 95%; font: 18px/1.5 sans-serif; }
-    .example-wrapper code { background: #F5F5F5; padding: 2px 6px; }
-</style>
+	<style>
+		.wrapper {
+			margin: 1em auto;
+			max-width: 800px;
+			width: 95%;
+			font: 18px / 1.5 sans-serif;
+		}
+		.wrapper div {
+			background: #F5F5F5;
+			padding: 2px 6px;
+		}
+	</style>
 
-<div class="example-wrapper">
-    <h1>Hello {{ controller_name }}! ✅</h1>
+	<div class="wrapper">
+		<div class="search_form">
+			<input type="search" name="input" id="search_value" placeholder="Search">
+			<input type="submit" id="search_btn" value="Search">
+		</div>
+        <div class="search_result" id='search_result'>
+        
+        </div>
+	</div>
+{% endblock %}
 
-    This friendly message is coming from:
-    <ul>
-        <li>Your controller at <code><a href="{{ 'D:/differ/dz3/php/xamp/htdocs/job_test/job_parser/src/Controller/JobController.php'|file_link(0) }}">src/Controller/JobController.php</a></code></li>
-        <li>Your template at <code><a href="{{ 'D:/differ/dz3/php/xamp/htdocs/job_test/job_parser/templates/job/index.html.twig'|file_link(0) }}">templates/job/index.html.twig</a></code></li>
-    </ul>
-</div>
+{% block script %}
+    <script>
+        function search() {
+            let url = 'http://localhost:8000/job/search/{search_value}';
+            let search_value = document.getElementById('search_value').value;
+            console.log(search_value.length);
+            if(search_value.length != 0){
+                url = url.replace('{search_value}', search_value);
+            }
+
+            let res = '';
+            fetch(url)
+                .then((response) => {
+                    return response.json();
+                })
+                .then((data) => {
+
+                    document.getElementById('search_result').innerHTML = '';
+                    data.search_result.map(element => {
+                        let job_div = document.createElement('div');
+                        job_div.className = "job";
+                        job_div.innerText = "Company: " + element.company + " Title: " + element.title + " Location: " + element.location;
+                        document.getElementById('search_result').appendChild(job_div);
+
+                    });
+                    
+                });
+
+        }
+
+
+        document.getElementById('search_btn').addEventListener('click', () => {
+            search();
+        });
+    </script>
 {% endblock %}
